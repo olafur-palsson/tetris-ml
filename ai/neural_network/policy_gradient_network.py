@@ -5,12 +5,13 @@ import torch.nn as nn
 import torch.nn.functional as Function
 from torch.distributions import Multinomial
 
-from ai.neural_net_config import AgentConfig, SGDConfig
+from ai.config.neural_net_config import AgentConfig, SGDConfig
 from ai.neural_network.neural_network import NeuralNetwork
 
 dtype = torch.double
 # device = torch.device("cpu")
 device = torch.device("cuda:0")
+verbose = False
 
 
 @dataclass
@@ -30,24 +31,33 @@ class PolicyGradientNetwork(NeuralNetwork):
             agent_config.nn.output_layer)
         self.value_optimizer = self._create_value_function_optimizer(
             agent_config.sgd)
-        self.pg_optimizer = self._create_policy_gradient_optimizer(
-            agent_config.sgd)
         self.pg_model = self._create_policy_gradient_model(
             agent_config.nn.output_layer)
+        self.pg_optimizer = self._create_policy_gradient_optimizer(
+            agent_config.sgd)
 
         self.estimates = []
 
+    def print_average_abs_layer_weight(self, layer):
+        layer_weight = abs(layer.weight.data).tolist()[0]
+        print(f'Average abs layer weight', sum(layer_weight) / len(layer_weight))
+
     def choose(self, options) -> int:
-        probabilities = self._softmax(options)
+        if verbose:
+            self.print_average_abs_layer_weight(self.value_model[0])
+
+        input_vectors = list(
+            map(lambda option: torch.FloatTensor(option), options))
+        probabilities = self._softmax(input_vectors)
         distribution = Multinomial(1, probabilities)
         move = distribution.sample()
         _, index_of_move = move.max(0)
-        value_estimate = self.pg_plugin.value_function(options[index_of_move])
+        value_estimate = self.value_function(input_vectors[index_of_move])
         log_probability = distribution.log_prob(move)
         self.estimates.append(Estimate(
             value=value_estimate,
             log_probability=log_probability))
-        return index_of_move
+        return index_of_move.item()
 
     def _softmax(self, input_vectors):
         scores = list(map(
@@ -56,7 +66,7 @@ class PolicyGradientNetwork(NeuralNetwork):
 
     def value_function(self, input_vector):
         detached_input = input_vector.detach()
-        return self.value_model.apply(detached_input)
+        return self.value_model(detached_input)
 
     @property
     def _value_estimates(self):
@@ -78,20 +88,22 @@ class PolicyGradientNetwork(NeuralNetwork):
 
     def _calculate_pg_function_loss(self, reward):
         rewards = torch.ones(len(self.estimates)) * reward
-        log_probs = torch.stack(self._log_probability_estimates)
-        return torch.dot(-rewards, log_probs)
+        log_probabilities = torch.stack(self._log_probability_estimates)
+        return torch.dot(-rewards, log_probabilities)
 
     def _calculate_value_function_loss(self, reward):
         values = torch.stack(self._value_estimates).squeeze()
-        targets = self._create_targets(values, reward)
+        episode_length = len(self._value_estimates)
+        targets = self._create_targets(reward, episode_length)
         return (targets - values).pow(2).sum()
 
-    def _create_targets(self, value_vector, reward):
-        temporal_delay = self.agent_config.nn.temporal_delay
-        values_without_gradients = value_vector.detach()
-        return torch.cat(
-            values_without_gradients[temporal_delay:],
-            torch.ones(temporal_delay) * reward)
+    def _create_targets(self, reward, episode_length):
+        discount_constant = 0.9
+        discount_vector = [
+            reward * discount_constant ** i
+            for i in range(episode_length)
+        ]
+        return torch.FloatTensor(discount_vector)
 
     def _adjust_value_function_wrt_loss(self, loss):
         self.value_optimizer.zero_grad()
@@ -109,8 +121,8 @@ class PolicyGradientNetwork(NeuralNetwork):
 
     def _create_policy_gradient_model(self, output_layer_width: int):
         return nn.Sequential(
-            nn.Linear(output_layer_width, 100),
-            nn.Linear(100, 1))
+            nn.Linear(output_layer_width, 100, bias=True),
+            nn.Linear(100, 1, bias=True))
 
     def _create_policy_gradient_optimizer(self, sgd_config: SGDConfig):
         return torch.optim.SGD(

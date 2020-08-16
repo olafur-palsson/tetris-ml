@@ -82,6 +82,34 @@ class PBlockFactory(BlockFactory):
                 ['.', '.', '.', '.']]
 
 
+class SquareBlockFactory(BlockFactory):
+
+    @property
+    def color(self) -> Color:
+        return Color.YELLOW
+
+    @property
+    def template(self) -> List[List[str]]:
+        return [['.', '.', '.', '.'],
+                ['.', 'x', 'x', '.'],
+                ['.', 'x', 'x', '.'],
+                ['.', '.', '.', '.']]
+
+
+class TrainingBlockFactory(BlockFactory):
+
+    @property
+    def color(self) -> Color:
+        return Color.YELLOW
+
+    @property
+    def template(self) -> List[List[str]]:
+        return [['.', '.', '.', '.'],
+                ['.', '.', '.', '.'],
+                ['.', 'x', 'x', '.'],
+                ['.', '.', '.', '.']]
+
+
 class LBlockFactory(BlockFactory):
 
     @property

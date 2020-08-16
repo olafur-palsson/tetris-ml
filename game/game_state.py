@@ -57,6 +57,9 @@ class GameState:
             for row in self.state
             if self.row_is_full(row))
 
+    def row_is_empty(self, row):
+        return not any(map(lambda cell: not cell.empty, row))
+
     def row_is_full(self, row):
         return all(map(lambda cell: not cell.empty, row))
 

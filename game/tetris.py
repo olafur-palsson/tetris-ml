@@ -17,6 +17,18 @@ class Tetris:
         self.game_state = initial_state
         self.current_block = self.generate_block()
         self.upcoming_block = self.generate_block()
+        self.score = 0
+
+    @property
+    def block_height(self):
+        for i, row in enumerate(self.game_state.state[::-1]):
+            if not self.game_state.row_is_empty(row):
+                return len(self.game_state.state) - i
+        return 0
+
+    def reset(self):
+        self.current_block = self.generate_block()
+        self.upcoming_block = self.generate_block()
 
     def generate_block(self) -> Block:
         factory = random.choice(self.block_factories)
@@ -39,8 +51,9 @@ class Tetris:
         self.game_state.lock_in_block(self.current_block)
         number_of_filled_rows = self.game_state.number_of_filled_rows
         self.game_state.clear_filled_rows()
-        print(number_of_filled_rows)
-        return number_of_filled_rows ** 2
+        points = number_of_filled_rows ** 2
+        self.score += points
+        return points
 
     def finish_round(self):
         self.current_block = self.upcoming_block

@@ -14,6 +14,11 @@ class Engine:
         self.square_size = width / 10
         self.drawing_cache: [GraphicsObject] = []
 
+    def render_frame(self, tetris):
+        self.clear()
+        self.render_game_state(tetris.game_state)
+        self.render_current_block(tetris.current_block)
+
     def clear(self):
         for graphics_object in self.drawing_cache:
             graphics_object.undraw()

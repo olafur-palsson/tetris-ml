@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from typing import List
 
 from dacite import from_dict
 
@@ -7,7 +8,7 @@ from dacite import from_dict
 @dataclass
 class NeuralNetConfig:
     temporal_delay: int
-    hidden_layers: [int]
+    hidden_layers: List[int]
     input_layer: int
     output_layer: int
 

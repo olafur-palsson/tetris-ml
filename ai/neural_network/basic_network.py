@@ -5,7 +5,7 @@ This *IS* the neural network under consideration.
 """
 import torch
 import torch.nn as nn
-from ai.neural_net_config import AgentConfig
+from ai.config.neural_net_config import AgentConfig
 
 dtype = torch.double
 device = torch.device("cpu")
