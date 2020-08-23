@@ -1,25 +1,17 @@
-from itertools import chain
-
-from ai.agent.agent import Agent
-from ai.neural_network.neural_network import NeuralNetwork
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from game.block import Block
-from game.game_state import GameState, Cell
+from game.game_state import GameState
 from game.move_list import Move
 
 
-class NeuralNetworkAgent(Agent):
+class Player:
 
-    def __init__(self, neural_network: NeuralNetwork):
-        self.neural_network = neural_network
-
-    def make_move(self, game_state: GameState, block: Block):
-        features = self._convert_to_feature_vector(game_state, block)
-        available_moves = self._create_move_vectors(features)
-        choice = self.neural_network.choose(options=available_moves)
-        return Move(choice)
+    def make_move(self, state, current_block) -> Move:
+        raise NotImplementedError()
 
     def give_reward(self, reward):
-        self.neural_network.give_reward(reward)
+        raise NotImplementedError()
 
     def _create_move_vectors(self, features: [float]) -> [float]:
         return [
@@ -36,7 +28,17 @@ class NeuralNetworkAgent(Agent):
         current_block_features = list(map(
             self._bool_to_float,
             self._flatten_vector(current_block.state)))
-        return [*game_features, *current_block_features]
+        x_position_features = [0 for i in range(12)]
+        x_position_features[current_block.x] = 1
+        y_position_features = [0 for i in range(20)]
+        y_position_features[current_block.y] = 1
+
+        return [
+            *game_features,
+            *current_block_features,
+            *x_position_features,
+            *y_position_features
+        ]
 
     def _flatten_vector(self, vector):
         return list(chain(*vector))

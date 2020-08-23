@@ -9,12 +9,12 @@ class InputHandler:
 
     def get_next_game_key(self):
         while True:
-            key = self.get_input_sync()
-            if self.is_game_key(key):
+            key = self._get_input_sync()
+            if self._is_game_key(key):
                 break
         return key
 
-    def is_game_key(self, key: Key):
+    def _is_game_key(self, key: Key):
         return key in [
             Key.esc,
             Key.down,
@@ -24,16 +24,16 @@ class InputHandler:
             Key.enter
         ]
 
-    def get_input_sync(self):
+    def _get_input_sync(self):
         with keyboard.Listener(
-            on_press=self.on_press,
-            on_release=self.on_release
+            on_press=self._on_press,
+            on_release=self._on_release
         ) as listener:
             listener.join()
             return self.key_pressed
 
-    def on_press(self, key):
+    def _on_press(self, key):
         self.key_pressed = key
 
-    def on_release(self, _):
+    def _on_release(self, _):
         return False

@@ -832,14 +832,14 @@ class Entry(GraphicsObject):
     def setFill(self, color):
         self.fill = color
         if self.entry:
-            self.entry.config(bg=color)
+            self.entry._config(bg=color)
 
     def _setFontComponent(self, which, value):
         font = list(self.font)
         font[which] = value
         self.font = tuple(font)
         if self.entry:
-            self.entry.config(font=self.font)
+            self.entry._config(font=self.font)
 
     def setFace(self, face):
         if face in ['helvetica', 'arial', 'courier', 'times roman']:
@@ -862,7 +862,7 @@ class Entry(GraphicsObject):
     def setTextColor(self, color):
         self.color = color
         if self.entry:
-            self.entry.config(fg=color)
+            self.entry._config(fg=color)
 
 
 class Image(GraphicsObject):

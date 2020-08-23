@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import List
 
-from game.block import Block
-from game.color import Color
-from game.position import Position
+from tetris.block import Block
+from tetris.color import Color
+from tetris.position import Position
 
 
 @dataclass

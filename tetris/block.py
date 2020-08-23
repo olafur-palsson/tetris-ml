@@ -1,8 +1,8 @@
 from typing import Iterable, List
 from dataclasses import dataclass
 
-from game.color import Color
-from game.position import Position
+from tetris.color import Color
+from tetris.position import Position
 
 
 @dataclass

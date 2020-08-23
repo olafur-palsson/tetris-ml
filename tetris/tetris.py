@@ -1,8 +1,8 @@
 from typing import List
 import random
 
-from game.block import BlockFactory, Block
-from game.game_state import GameState
+from tetris.block import BlockFactory, Block
+from tetris.game_state import GameState
 
 
 class Tetris:

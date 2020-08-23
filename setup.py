@@ -7,5 +7,5 @@ setup(name='tetris',
       author='',
       author_email='',
       license='MIT',
-      packages=['game'],
+      packages=['tetris'],
       zip_safe=False)

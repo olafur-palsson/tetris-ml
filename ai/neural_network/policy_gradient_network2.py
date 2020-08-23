@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -8,6 +8,7 @@ import torch.nn.functional as Function
 from torch.distributions import Multinomial
 
 from ai.config.neural_net_config import Config, SGDConfig
+from ai.neural_network.filename import Filename
 from ai.lib.network import Network
 from ai.lib.decider import Decider
 
@@ -30,18 +31,25 @@ class PolicyGradientNetwork(Decider):
     value_function: Network
     feature_function: Network
 
-    def __init__(self, subnetworks: Dict[str, Network]):
+    def __init__(self, subnetworks: List[Network]):
+        self.agent_config = agent_config
+        self.softmax_function = nn.Softmax()
         self.estimates = []
-        self.policy_gradient = subnetworks['pg']
-        self.value_function = subnetworks['value']
-        self.feature_function = subnetworks['feature']
-        self.all_networks = subnetworks.values()
+        self.filenames = Filename(self.agent_config.filename)
+        if self._model_exists():
+            self._import_network(agent_config=agent_config)
+        else:
+            self._create_new_network()
 
     def export(self):
-        for net in self.all_networks:
+        for net in [
+            self.policy_gradient,
+            self.value_function,
+            self.feature_function
+        ]:
             net.export()
 
-    def _import_network(self, agent_config: Config):
+    def _import_network(self, agent_config: Config) -> Dict[str, Network]:
         self.pg_optimizer = Network('pg')
         self.value_function = Network('value')
         self.feature_function = Network('feature')

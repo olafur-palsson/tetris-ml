@@ -1,16 +1,8 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional, Dict
 
 from dacite import from_dict
-
-
-@dataclass
-class NeuralNetConfig:
-    temporal_delay: int
-    hidden_layers: List[int]
-    input_layer: int
-    output_layer: int
 
 
 @dataclass
@@ -21,14 +13,27 @@ class SGDConfig:
 
 
 @dataclass
-class AgentConfig:
-    net: str
-    use_policy_gradient: bool
-    feature_vector: str
-    epsilon: float
-    filename: str
-    nn: NeuralNetConfig
+class LayerConfig:
+    nodes: int
+    bias: Optional[bool]
+    relu: Optional[bool]
+
+
+@dataclass
+class NetworkConfig:
+    id: str
+    previous: Optional[str]
+    hidden_layers: List[LayerConfig]
+    output: int
     sgd: SGDConfig
+
+
+@dataclass
+class Config:
+    type: str
+    name: str
+    filename: str
+    networks: Dict[str, NetworkConfig]
 
     @classmethod
     def from_file_path(cls, path: str):

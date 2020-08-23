@@ -1,18 +1,48 @@
 {
   "filename": "nn_pg_2",
-  "use_policy_gradient": true,
-  "feature_vector": "raw1",
-  "epsilon": 0.15,
-  "net": "basic",
-  "nn": {
-    "temporal_delay": 3,
-    "input_layer": 464,
-    "hidden_layers": [200, 200],
-    "output_layer": 219
-  },
-  "sgd": {
-    "momentum": 0.9,
-    "learning_rate": 0.00001,
-    "learning_rate_policy_gradient": 0.0005
+  "type": "policy_gradient_network",
+  "input_length": 250,
+  "networks": {
+    "root": {
+      "id": "feature",
+      "previous": null,
+      "hidden_layers": [{
+        "nodes": 100
+      }, {
+        "nodes": 100
+      }],
+      "output": 100,
+      "sgd": {
+        "momentum": 0.9,
+        "learning_rate": 0.00001,
+        "learning_rate_policy_gradient": 0.0005
+      }
+    },
+    "value_function": {
+      "id": "value",
+      "previous": "root",
+      "hidden_layers": [{
+        "nodes": 50
+      }],
+      "output": 1,
+      "sgd": {
+        "momentum": 0.9,
+        "learning_rate": 0.00001,
+        "learning_rate_policy_gradient": 0.0005
+      }
+    },
+    "policy_gradient": {
+      "id": "pg",
+      "previous": "root",
+      "hidden_layers": [{
+        "nodes": 50
+      }],
+      "output": 1,
+      "sgd": {
+        "momentum": 0.9,
+        "learning_rate": 0.00001,
+        "learning_rate_policy_gradient": 0.0005
+      }
+    }
   }
 }

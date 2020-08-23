@@ -1,21 +1,23 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-This *IS* the neural network under consideration.
-"""
 import torch
 import torch.nn as nn
-from ai.config.neural_net_config import AgentConfig
+from ai.config.neural_net_config import NetworkConfig
+from ai.lib.decider import Decider
 
 dtype = torch.double
-device = torch.device("cpu")
+# device = torch.device("cpu")
 device = torch.device("cuda:0")  # Uncomment this to run on GPU
 
 
-class BasicNeuralNetwork:
+class BasicNeuralNetwork(Decider):
 
-    def __init__(self, agent_config: AgentConfig):
-        self.agent_config = agent_config
+    def give_reward(self, reward):
+        pass
+
+    def decide(self, options) -> int:
+        pass
+
+    def __init__(self, config: NetworkConfig):
+        self._config = config
         self.predicted_rewards = []
         self.model = self._create_network_layers()
         self.optimizer = self._create_optimizer()
@@ -26,8 +28,8 @@ class BasicNeuralNetwork:
     def _create_optimizer(self):
         return torch.optim.SGD(
             self.model.parameters(),
-            momentum=self.agent_config.sgd.momentum,
-            lr=self.agent_config.sgd.momentum)
+            momentum=self._config.sgd.momentum,
+            lr=self._config.sgd.momentum)
 
     def _make_layers(self, config):
         layer_widths = self._determine_layer_widths(config)
@@ -42,9 +44,9 @@ class BasicNeuralNetwork:
 
     def _determine_layer_widths(self):
         return [
-            self.agent_config.nn.input_layer,
-            *self.agent_config.nn.hidden_layers,
-            self.agent_config.nn.output_layer
+            self._config.nn.input_layer,
+            *self._config.nn.hidden_layers,
+            self._config.nn.output_layer
         ]
 
     def run_decision(self, board_features, save_predictions=True):
@@ -68,7 +70,7 @@ class BasicNeuralNetwork:
 
     # TODO: Refactor this shit, needs
     def calculate_loss_vector(self, reward_vector):
-        temporal_delay = self.agent_config.nn.temporal_delay
+        temporal_delay = self._config.nn.temporal_delay
         with torch.no_grad():
             for i in range(len(self.predicted_rewards)):
                 index_of_last_prediction_rewarded = (

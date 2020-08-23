@@ -1,12 +1,12 @@
 from torch.distributions.multinomial import Multinomial
 
-from ai.neural_network.neural_network import NeuralNetwork
+from ai.lib.decider import Decider
 from ai.policy.policy import Policy
 
 
 class NeuralNetworkPolicy(Policy):
 
-    def __init__(self, neural_network: NeuralNetwork):
+    def __init__(self, neural_network: Decider):
         self.net = neural_network
 
     def get_feature_vector(self, board):
