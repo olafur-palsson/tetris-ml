@@ -33,6 +33,7 @@ class Config:
     type: str
     name: str
     filename: str
+    options: Dict[str, any]
     networks: Dict[str, NetworkConfig]
 
     @classmethod

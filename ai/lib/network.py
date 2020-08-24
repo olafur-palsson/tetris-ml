@@ -22,19 +22,19 @@ class NetworkManager(Network):
     _config: Config
     _networks: Dict[Network]
 
-    def __init__(self, config: Config, networks: List[Network]):
+    def __init__(self, config: Config):
         self._config = config
-        self._networks = {
-            network.id: network
-            for network in networks
-        }
-
         try:
             self._load()
         except:
             should_create = input('Unable to load, create?').lower() == 'y'
             if should_create:
                 self._create()
+            else:
+                raise Exception('Unable to load')
+
+    def get(self, network_id: str):
+        return self._networks[network_id]
 
     def save(self):
         self.touch_folder('export')

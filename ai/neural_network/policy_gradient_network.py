@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ import torch.nn.functional as Function
 from torch.distributions import Multinomial
 
 from ai.config.neural_net_config import Config, SGDConfig
-from ai.lib.network import Network
+from ai.lib.network import Network, NetworkManager
 from ai.lib.decider import Decider
 
 dtype = torch.double
@@ -18,151 +18,106 @@ verbose = False
 
 
 @dataclass
-class Estimate:
-    value: float
-    log_probability: float
+class Round:
+    value: torch.Tensor
+    log_probability: torch.Tensor
+    reward: float = 0
 
 
 # TODO: Should obviously be split into two networks
 class PolicyGradientNetwork(Decider):
-    estimates: [Estimate]
-    policy_gradient: Network
-    value_function: Network
-    feature_function: Network
+    _base_network: Network
+    _policy_gradient: Network
+    _value_function: Network
 
-    def __init__(self, subnetworks: Dict[str, Network]):
-        self.estimates = []
-        self.policy_gradient = subnetworks['pg']
-        self.value_function = subnetworks['value']
-        self.feature_function = subnetworks['feature']
-        self.all_networks = subnetworks.values()
+    DISCOUNT_RATE: 0.1
 
-    def export(self):
-        for net in self.all_networks:
-            net.export()
+    def __init__(self, config: Config):
+        self._manager = NetworkManager(config)
+        self.rounds: List[Round] = []
 
-    def _import_network(self, agent_config: Config):
-        self.pg_optimizer = Network('pg')
-        self.value_function = Network('value')
-        self.feature_function = Network('feature')
-        for net in [
-            self.policy_gradient,
-            self.value_function,
-            self.feature_function
-        ]:
-            net.load(agent_config.sgd)
+    def decide(self, choices) -> int:
+        inputs = map(
+            lambda option: torch.FloatTensor(option), choices)
+        enhanced_features = map(
+            lambda vec: self._base_network.model(vec), inputs)
+        action_features = map(
+            lambda vec: self._policy_gradient.model(vec.detach()),
+            enhanced_features)
 
-    def _model_exists(self):
-        return os.path.isfile(self.filenames.get('value_function'))
-
-    def _create_new_network(self):
-        self.value_model = self._create_value_function_model(
-            self.agent_config.nn.output_layer)
-        self.value_optimizer = self._create_value_function_optimizer(
-            self.agent_config.sgd)
-        self.pg_model = self._create_policy_gradient_model(
-            self.agent_config.nn.output_layer)
-        self.pg_optimizer = self._create_policy_gradient_optimizer(
-            self.agent_config.sgd)
-
-    def print_average_abs_layer_weight(self, layer):
-        layer_weight = abs(layer.weight.data).tolist()[0]
-        print(f'Average abs layer weight', sum(layer_weight) / len(layer_weight))
-
-    def decide(self, options) -> int:
-        if verbose:
-            self.print_average_abs_layer_weight(self.value_model[0])
-
-        input_vectors = list(
-            map(lambda option: torch.FloatTensor(option), options))
-        probabilities = self._softmax(input_vectors)
+        # Get move
+        probabilities = Function.softmax(torch.cat(list(action_features)))
         distribution = Multinomial(1, probabilities)
         move = distribution.sample()
         _, index_of_move = move.max(0)
-        value_estimate = self.estimate_value(input_vectors[index_of_move])
+
+        # Expected reward
+        expected_reward = self._value_function.model(inputs[index_of_move])
         log_probability = distribution.log_prob(move)
-        self.estimates.append(Estimate(
-            value=value_estimate,
+
+        # Record estimate
+        self.rounds.append(Round(
+            value=expected_reward,
             log_probability=log_probability))
+
+        # Return
         return index_of_move.item()
 
-    def _softmax(self, input_vectors):
-        scores = list(map(
-            lambda vector: self.pg_model(vector.detach()), input_vectors))
-        return Function.softmax(torch.cat(scores))
-
-    def estimate_value(self, input_vector):
-        detached_input = input_vector.detach()
-        return self.value_model(detached_input)
-
-    @property
-    def _value_estimates(self):
-        return list(
-            map(lambda estimate: estimate.value, self.estimates))
-
-    @property
-    def _log_probability_estimates(self):
-        return list(
-            map(lambda estimate: estimate.log_probability, self.estimates))
+    def save(self):
+        self._manager.save()
 
     # TODO: Change to reward vector to make generic
     def give_reward(self, reward: float):
-        loss = self._calculate_value_function_loss(reward)
-        self._adjust_value_function_wrt_loss(loss)
-        loss2 = self._calculate_pg_function_loss(reward)
-        self._adjust_pg_function_wrt_loss(loss2)
-        self.estimates = []
+        self.rounds[-1].reward += reward
+        for i, round_data in enumerate(reversed(self.rounds)):
+            discounted_reward = reward * self.DISCOUNT_RATE ** i
+            round_data.reward += discounted_reward
 
-    def _calculate_pg_function_loss(self, reward):
-        rewards = torch.ones(len(self.estimates)) * reward
-        log_probabilities = torch.stack(self._log_probability_estimates)
-        return torch.dot(-rewards, log_probabilities)
+    def finish_episode(self):
+        # Value
+        self._value_function.optimizer.zero_grad()
+        self._base_network.optimizer.zero_grad()
 
-    def _calculate_value_function_loss(self, reward):
-        values = torch.stack(self._value_estimates).squeeze()
-        episode_length = len(self._value_estimates)
-        targets = self._create_targets(reward, episode_length)
-        return (targets - values).pow(2).sum()
+        self._value_function_loss.backward()
+        self._value_function.optimizer.step()
+        self._base_network.optimizer.step()
 
-    def _create_targets(self, reward, episode_length):
-        discount_constant = 0.9
-        discount_vector = [
-            reward * discount_constant ** i
-            for i in range(episode_length)
-        ]
-        return torch.FloatTensor(discount_vector)
+        # Decision
+        self._policy_gradient.optimizer.zero_grad()
+        self._pg_function_loss.backward()
+        self._policy_gradient.optimizer.step()
 
-    def _adjust_value_function_wrt_loss(self, loss):
-        self.value_optimizer.zero_grad()
-        loss.backward()
-        self.value_optimizer.step()
 
-    def _adjust_pg_function_wrt_loss(self, loss):
-        self.pg_optimizer.zero_grad()
-        loss.backward()
-        self.value_optimizer.step()
 
-    def _reset_gradients(self):
-        self.pg_optimizer.zero_grad()
-        self.value_optimizer.zero_grad()
+    @property
+    def _pg_function_loss(self):
+        log_probabilities = torch.stack(list(
+            round_data.log_probability
+            for round_data in self.rounds))
+        return torch.dot(-self._reward_tensor, log_probabilities)
 
-    def _create_policy_gradient_model(self, output_layer_width: int):
-        return nn.Sequential(
-            nn.Linear(output_layer_width, 100, bias=True),
-            nn.Linear(100, 1, bias=True))
+    @property
+    def _value_function_loss(self) -> torch.FloatTensor:
+        value_estimate_tensor = torch.stack(list(
+            round_data.value
+            for round_data in self.rounds))
+        return (self._reward_tensor - value_estimate_tensor).pow(2).sum()
 
-    def _create_policy_gradient_optimizer(self, sgd_config: SGDConfig):
-        return torch.optim.SGD(
-            self.pg_model.parameters(),
-            momentum=sgd_config.momentum,
-            lr=sgd_config.learning_rate)
+    @property
+    def _reward_tensor(self):
+        return torch.FloatTensor(
+            round_data.reward
+            for round_data in self.rounds)
 
-    def _create_value_function_optimizer(
-            self, sgd_config: SGDConfig) -> torch.optim.SGD:
-        return torch.optim.SGD(
-            self.value_model.parameters(),
-            momentum=sgd_config.momentum,
-            lr=sgd_config.learning_rate)
+    @property
+    def _value_function(self) -> Network:
+        return self._manager.get(network_id='value_function')
 
-    def _create_value_function_model(self, output_layer_width: int):
-        return nn.Sequential(nn.Linear(output_layer_width, 1))
+    @property
+    def _base_network(self) -> Network:
+        return self._manager.get(network_id='base_network')
+
+    @property
+    def _policy_gradient(self) -> Network:
+        return self._manager.get(network_id='policy_gradient')
+
