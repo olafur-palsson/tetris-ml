@@ -9,6 +9,7 @@ verify_ssl = true
 pynput = "*"
 dacite = "*"
 torch = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.8"

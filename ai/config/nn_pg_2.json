@@ -1,47 +1,48 @@
 {
   "filename": "nn_pg_2",
+  "name": "nn_pg_2",
   "type": "policy_gradient_network",
-  "input_length": 250,
   "networks": {
     "root": {
-      "id": "feature",
+      "id": "base_network",
       "previous": null,
+      "input": 251,
       "hidden_layers": [{
-        "nodes": 100
+        "type": "linear",
+        "linear":
       }, {
-        "nodes": 100
+        "nodes": 50
       }],
-      "output": 100,
+      "output": 50,
       "sgd": {
         "momentum": 0.9,
-        "learning_rate": 0.00001,
-        "learning_rate_policy_gradient": 0.0005
+        "learning_rate": 0.0000000003
       }
     },
     "value_function": {
-      "id": "value",
+      "id": "value_function",
       "previous": "root",
+      "input": 50,
       "hidden_layers": [{
         "nodes": 50
       }],
       "output": 1,
       "sgd": {
         "momentum": 0.9,
-        "learning_rate": 0.00001,
-        "learning_rate_policy_gradient": 0.0005
+        "learning_rate": 0.0000000003
       }
     },
     "policy_gradient": {
-      "id": "pg",
+      "id": "policy_gradient",
       "previous": "root",
+      "input": 50,
       "hidden_layers": [{
         "nodes": 50
       }],
       "output": 1,
       "sgd": {
-        "momentum": 0.9,
-        "learning_rate": 0.00001,
-        "learning_rate_policy_gradient": 0.0005
+        "momentum": 0.5,
+        "learning_rate": 0.0000000001
       }
     }
   }

@@ -3,6 +3,7 @@ import random
 
 from tetris.block import BlockFactory, Block
 from tetris.game_state import GameState
+from tetris.move_list import Move
 
 
 class Tetris:
@@ -18,6 +19,17 @@ class Tetris:
         self.current_block = self.generate_block()
         self.upcoming_block = self.generate_block()
         self.score = 0
+
+    def handle_move(self, move: Move) -> int:
+        if move == Move.right:
+            self.right()
+        elif move == Move.left:
+            self.left()
+        elif move == Move.down:
+            return self.down()
+        elif move == Move.rotate:
+            self.rotate_clockwise()
+        return 0
 
     @property
     def block_height(self):
@@ -48,12 +60,14 @@ class Tetris:
             return 0
 
     def place_block(self):
+        block_height_before = self.block_height
         self.game_state.lock_in_block(self.current_block)
         number_of_filled_rows = self.game_state.number_of_filled_rows
         self.game_state.clear_filled_rows()
         points = number_of_filled_rows ** 2
+        punishment = block_height_before - self.block_height
         self.score += points
-        return points
+        return points + punishment * 0.1
 
     def finish_round(self):
         self.current_block = self.upcoming_block

@@ -1,8 +1,8 @@
 from engine.graphics import Polygon, Point, GraphWin, GraphicsObject
-from game.block import Block
-from game.color import Color
-from game.game_state import GameState
-from game.position import Position
+from tetris.block import Block
+from tetris.color import Color
+from tetris.game_state import GameState
+from tetris.position import Position
 
 
 class Engine:

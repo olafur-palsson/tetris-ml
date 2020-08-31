@@ -1,76 +1,66 @@
-from typing import List
+import argparse
+import json
 
-from pynput.keyboard import Key
+import yaml
+from dacite import from_dict
 
-from engine.engine import Engine
-from engine.input_handler import InputHandler
-from game.tetris import Tetris
-from game.tetris import GameState
-from game.block import (
-    Block,
-    BlockFactory,
-    TBlockFactory,
-    IBlockFactory,
-    PBlockFactory,
-    LBlockFactory,
-    SBlockFactory,
-    ZBlockFactory
-)
-
-
-class Game:
-
-    def __init__(self):
-        initial_state = GameState()
-        self.engine = Engine()
-        self.input_handler = InputHandler()
-        self.tetris = Tetris(
-            block_factories=self.block_factories,
-            initial_state=initial_state)
-        self.start_game_loop()
-
-    def start_game_loop(self):
-        while not self.tetris.is_lost():
-            self.engine.clear()
-            self.engine.render_game_state(self.tetris.game_state)
-            self.engine.render_current_block(self.tetris.current_block)
-            key = self.input_handler.get_next_game_key()
-            self.handle_key(key)
-
-    def handle_key(self, key: Key):
-        if key == Key.space:
-            self.tetris.rotate_clockwise()
-        elif key == Key.right:
-            self.tetris.right()
-        elif key == Key.left:
-            self.tetris.left()
-        elif key == Key.down:
-            self.tetris.down()
-        elif key == Key.enter:
-            self.tetris.down()
-            self.tetris.down()
-            self.tetris.down()
-            self.tetris.down()
-            self.tetris.down()
-
-    @property
-    def config(self):
-        return {'HEIGHT': 20, 'WIDTH': 10}
-
-    @property
-    def block_factories(self) -> List[BlockFactory]:
-        return [
-            TBlockFactory(),
-            IBlockFactory(),
-            PBlockFactory(),
-            LBlockFactory(),
-            SBlockFactory(),
-            ZBlockFactory()
-        ]
+from ai.config.neural_net_config import Config
+from ai.neural_network.policy_gradient_network import PolicyGradientNetwork
+from config import Level
+from game import Game
+from player.ai_player import AIPlayer
+from player.human_player import HumanPlayer
+from player.player import Player
 
 
 def main():
-    Game()
+    args = get_args()
+    player = get_player(args)
+    block_factories = get_level(args).value
+    game = Game(
+        block_factories=block_factories,
+        player=player)
+    while True:
+        game.play()
+
+
+def get_player(args) -> Player:
+    if args.player == 'human':
+        return HumanPlayer()
+    network_path = args.network
+    with open(network_path) as file:
+        if network_path.endswith('json'):
+            config = from_dict(Config, json.load(file))
+        elif network_path.endswith('yaml'):
+            config = from_dict(Config, yaml.load(file))
+    network = PolicyGradientNetwork(config)
+    return AIPlayer(network)
+
+
+def get_level(args) -> Level:
+    level = args.level.upper()
+    return Level[level]
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Tetris solution')
+    parser.add_argument(
+        '-p',
+        '--player',
+        help='one of { human, bot }',
+        default='human'
+    )
+    parser.add_argument(
+        '-l',
+        '--level',
+        help='one of { one, two, ..., eight, tetris }',
+        default='tetris')
+    parser.add_argument(
+        '-n',
+        '--network',
+        help='path to a network'
+    )
+    return parser.parse_args()
 
 
 if __name__ == '__main__':

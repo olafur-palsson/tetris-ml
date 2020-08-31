@@ -1,10 +1,15 @@
 from engine.input_handler import InputHandler
-from game.move_list import Move
+from tetris.move_list import Move
 from player.player import Player
 from pynput.keyboard import Key
 
 
 class HumanPlayer(Player):
+
+    @property
+    def should_render(self) -> bool:
+        return True
+
     __key_move_map = {
         Key.esc: Exception('Force exit'),
         Key.down: Move.down,

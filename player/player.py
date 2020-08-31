@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from game.block import Block
-from game.game_state import GameState
-from game.move_list import Move
+from itertools import chain
+
+from tetris.block import Block
+from tetris.game_state import GameState, Cell
+from tetris.move_list import Move
 
 
 class Player:
+    game_count = 0
 
-    def make_move(self, state, current_block) -> Move:
+    @property
+    def should_render(self) -> bool:
         raise NotImplementedError()
 
-    def give_reward(self, reward):
+    def make_move(self, state: GameState, current_block: Block) -> Move:
+        raise NotImplementedError()
+
+    def give_reward(self, reward: float):
         raise NotImplementedError()
 
     def _create_move_vectors(self, features: [float]) -> [float]:

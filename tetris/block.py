@@ -51,7 +51,7 @@ class BlockFactory:
                 self.template))
         return Block(
             state=positions,
-            x=3,
+            x=5,
             y=19,
             color=self.color)
 

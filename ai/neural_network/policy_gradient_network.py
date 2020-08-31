@@ -8,7 +8,7 @@ import torch.nn.functional as Function
 from torch.distributions import Multinomial
 
 from ai.config.neural_net_config import Config, SGDConfig
-from ai.lib.network import Network, NetworkManager
+from ai.lib.network_manager import Network, NetworkManager
 from ai.lib.decider import Decider
 
 dtype = torch.double
@@ -30,20 +30,19 @@ class PolicyGradientNetwork(Decider):
     _policy_gradient: Network
     _value_function: Network
 
-    DISCOUNT_RATE: 0.1
-
     def __init__(self, config: Config):
         self._manager = NetworkManager(config)
         self.rounds: List[Round] = []
+        self.discount_rate = config.options.get('discount_rate')
 
     def decide(self, choices) -> int:
-        inputs = map(
-            lambda option: torch.FloatTensor(option), choices)
-        enhanced_features = map(
-            lambda vec: self._base_network.model(vec), inputs)
-        action_features = map(
-            lambda vec: self._policy_gradient.model(vec.detach()),
-            enhanced_features)
+        inputs = list(map(
+            lambda choice: torch.FloatTensor(choice), choices))
+        enhanced_features = list(map(
+            lambda vec: self._base_network.model.forward(vec), inputs))
+        action_features = list(map(
+            lambda vec: self._policy_gradient.model.forward(vec.detach()),
+            enhanced_features))
 
         # Get move
         probabilities = Function.softmax(torch.cat(list(action_features)))
@@ -52,7 +51,8 @@ class PolicyGradientNetwork(Decider):
         _, index_of_move = move.max(0)
 
         # Expected reward
-        expected_reward = self._value_function.model(inputs[index_of_move])
+        expected_reward = self._value_function.model(
+            enhanced_features[index_of_move])
         log_probability = distribution.log_prob(move)
 
         # Record estimate
@@ -68,24 +68,24 @@ class PolicyGradientNetwork(Decider):
 
     # TODO: Change to reward vector to make generic
     def give_reward(self, reward: float):
-        self.rounds[-1].reward += reward
-        for i, round_data in enumerate(reversed(self.rounds)):
-            discounted_reward = reward * self.DISCOUNT_RATE ** i
-            round_data.reward += discounted_reward
+        if len(self.rounds):
+            self.rounds[-1].reward += reward
+            for i, round_data in enumerate(reversed(self.rounds)):
+                discounted_reward = reward * self.discount_rate ** i
+                round_data.reward += discounted_reward
 
     def finish_episode(self):
-        # Value
         self._value_function.optimizer.zero_grad()
         self._base_network.optimizer.zero_grad()
+        self._policy_gradient.optimizer.zero_grad()
 
         self._value_function_loss.backward()
+        self._pg_function_loss.backward()
+
         self._value_function.optimizer.step()
         self._base_network.optimizer.step()
-
-        # Decision
-        self._policy_gradient.optimizer.zero_grad()
-        self._pg_function_loss.backward()
         self._policy_gradient.optimizer.step()
+        self.rounds = []
 
 
 
@@ -106,8 +106,8 @@ class PolicyGradientNetwork(Decider):
     @property
     def _reward_tensor(self):
         return torch.FloatTensor(
-            round_data.reward
-            for round_data in self.rounds)
+            list(round_data.reward
+            for round_data in self.rounds))
 
     @property
     def _value_function(self) -> Network:

@@ -9,14 +9,29 @@ from dacite import from_dict
 class SGDConfig:
     momentum: float
     learning_rate: float
-    learning_rate_policy_gradient: float
+
+
+@dataclass
+class ConvLayerConfig:
+    nodes: int
+    input_channels: int
+    output_channels: int
+    kernel_size: int
+    stride: int
+
+
+@dataclass
+class LinearLayerConfig:
+    nodes: int
+    bias: Optional[bool]
 
 
 @dataclass
 class LayerConfig:
     nodes: int
-    bias: Optional[bool]
-    relu: Optional[bool]
+    type: str
+    linear: Optional[LinearLayerConfig]
+    conv: Optional[ConvLayerConfig]
 
 
 @dataclass
@@ -24,6 +39,7 @@ class NetworkConfig:
     id: str
     previous: Optional[str]
     hidden_layers: List[LayerConfig]
+    input: int
     output: int
     sgd: SGDConfig
 
@@ -33,7 +49,7 @@ class Config:
     type: str
     name: str
     filename: str
-    options: Dict[str, any]
+    options: Optional[Dict[str, any]]
     networks: Dict[str, NetworkConfig]
 
     @classmethod

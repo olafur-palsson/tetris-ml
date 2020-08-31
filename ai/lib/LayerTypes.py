@@ -1,7 +1,14 @@
+from typing import Union
 from torch import nn, optim
 
 from ai.config.neural_net_config import NetworkConfig, LayerConfig, SGDConfig
 from ai.lib.network_manager import Network
+
+
+class Layers:
+    LINEAR = nn.Linear
+    RELU = nn.ReLU
+    CONV2D = nn.Conv2d
 
 
 class NetworkBuilder:
@@ -31,26 +38,25 @@ class NetworkBuilder:
         for layer_config in network_config.hidden_layers:
             layer = cls._create_layer(last_length, layer_config)
             layers.append(layer)
-            if layer_config.type == 'linear':
-                last_length = layer_config.linear.nodes
+            last_length = layer_config.nodes
         layers.append(nn.Linear(last_length, network_config.output))
         return nn.Sequential(*layers)
+
+    def _create_conv_layer(
+            self,
+            layer_config: LayerConfig) -> nn.Sequential:
+        return nn.Sequential(
+            nn.Conv2d(layer_config.input_channels, input_channels, kernel_size=layer_config.kernel_size, stride=layer_config.stride),
+        )
 
     @staticmethod
     def _create_layer(
             input_length,
-            layer_config: LayerConfig) -> nn.Module:
-        if layer_config.type == 'relu':
+            layer_config: LayerConfig) -> Union[nn.ReLU, nn.Linear]:
+        if layer_config.relu:
             return nn.ReLU()
-        elif layer_config.type == 'linear':
+        else:
             return nn.Linear(
                 input_length,
-                layer_config.linear.nodes,
-                bias=layer_config.linear.bias)
-        elif layer_config.type == 'conv':
-            return nn.Conv2d(
-                layer_config.conv.input_channels,
-                layer_config.conv.output_channels,
-                kernel_size=layer_config.conv.kernel_size,
-                stride=layer_config.conv.stride)
-
+                layer_config.nodes,
+                bias=layer_config.bias)
