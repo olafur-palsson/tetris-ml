@@ -5,6 +5,7 @@ import yaml
 from dacite import from_dict
 
 from ai.config.neural_net_config import Config
+from ai.features.hot_one_formatter import HotOneFormatter
 from ai.neural_network.policy_gradient_network import PolicyGradientNetwork
 from config import Level
 from game import Game
@@ -33,8 +34,21 @@ def get_player(args) -> Player:
             config = from_dict(Config, json.load(file))
         elif network_path.endswith('yaml'):
             config = from_dict(Config, yaml.load(file))
+
     network = PolicyGradientNetwork(config)
     return AIPlayer(network)
+
+
+def create_conv_player(config: Config):
+    network = PGConvNetwork(config)
+    formatter = RawFormatter()
+    return AIPlayer(network, formatter)
+
+
+def create_pg_player(config: Config):
+    network = PolicyGradientNetwork(config)
+    formatter = HotOneFormatter()
+    return AIPlayer(network, formatter)
 
 
 def get_level(args) -> Level:

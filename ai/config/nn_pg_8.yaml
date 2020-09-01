@@ -1,6 +1,7 @@
 filename: nn_pg_2
 name: nn_pg_2
   type: policy_gradient_network
+  features: raw
   networks:
 
     conv_piece:

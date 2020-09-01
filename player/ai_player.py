@@ -1,14 +1,18 @@
 from itertools import chain
 import random
+from typing import Generic, TypeVar
 
+from ai.features.feature_formatter import FeatureFormatter
 from player.player import Player
 from ai.lib.decider import Decider
 from tetris.block import Block
 from tetris.game_state import GameState, Cell
 from tetris.move_list import Move
 
+T = TypeVar('T')
 
-class AIPlayer(Player):
+
+class AIPlayer(Player, Generic[T]):
 
     game_count = 0
     mega_counter = 0
@@ -17,16 +21,19 @@ class AIPlayer(Player):
     def should_render(self) -> bool:
         return not (self.game_count % 50)
 
-    def __init__(self, neural_network: Decider):
+    def __init__(
+            self,
+            neural_network: Decider,
+            feature_formatter: FeatureFormatter[T]):
         self.neural_network = neural_network
         self.move_counter = 0
+        self.formatter = feature_formatter
 
     def make_move(self, game_state: GameState, block: Block):
-        features = self._convert_to_feature_vector(game_state, block)
-        available_moves = self._create_move_vectors(features)
+        choices = self.formatter.create_choices(game_state, block)
         if random.random() > 0.95:
             return Move.down
-        choice = self.neural_network.decide(choices=available_moves)
+        choice = self.neural_network.decide(choices=choices)
         self.every_now_and_then()
         return Move(choice)
 

@@ -3,11 +3,10 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as Function
 from torch.distributions import Multinomial
 
-from ai.config.neural_net_config import Config, SGDConfig
+from ai.config.neural_net_config import Config
 from ai.lib.network_manager import Network, NetworkManager
 from ai.lib.decider import Decider
 
@@ -25,7 +24,7 @@ class Round:
 
 
 # TODO: Should obviously be split into two networks
-class PolicyGradientNetwork(Decider):
+class PGConvNetwork(Decider):
     _base_network: Network
     _policy_gradient: Network
     _value_function: Network
@@ -35,7 +34,8 @@ class PolicyGradientNetwork(Decider):
         self.rounds: List[Round] = []
         self.discount_rate = config.options.get('discount_rate')
 
-    def decide(self, choices: [[float]]) -> int:
+    def decide(self, choices: List[any]) -> int:
+
         inputs = list(map(
             lambda choice: torch.FloatTensor(choice), choices))
         enhanced_features = list(map(

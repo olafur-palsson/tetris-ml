@@ -2,6 +2,7 @@
   "filename": "nn_pg_7",
   "name": "nn_pg_7",
   "type": "policy_gradient_network",
+  "features": "hotone",
   "options": {
     "discount_rate": 0.05
   },
@@ -39,7 +40,6 @@
 
         }
       ],
-      "output": ,
       "sgd": {
         "momentum": 0,
         "learning_rate": 0.00001

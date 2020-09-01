@@ -32,6 +32,14 @@ class NetworkManager(Network):
     def get(self, network_id: str):
         return self._networks[network_id]
 
+    def zero_grad(self):
+        for network in self._networks.values():
+            network.optimizer.zero_grad()
+
+    def step(self):
+        for network in self._networks.values():
+            network.optimizer.step()
+
     def save(self):
         self._touch_folder('export')
         for _, network in self._networks.items():
