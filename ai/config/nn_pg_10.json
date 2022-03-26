@@ -1,29 +1,42 @@
 {
-  "filename": "nn_pg_5",
-  "name": "nn_pg_5",
+  "filename": "nn_pg_10",
+  "name": "nn_pg_10",
   "type": "policy_gradient_network",
   "options": {
-    "discount_rate": 0.25
+    "discount_rate": 0.01
   },
   "networks": {
     "root": {
       "id": "base_network",
       "previous": null,
-      "input": 403,
+      "input": 404,
       "hidden_layers": [
         {
           "type": "linear",
-          "nodes": 100
+          "nodes": 100,
+          "linear": {
+            "nodes": 100
+          }
         },
         {
           "type": "linear",
-          "nodes": 100
+          "nodes": 100,
+          "linear": {
+            "nodes": 100
+          }
+        },
+        {
+          "type": "linear",
+          "nodes": 100,
+          "linear": {
+            "nodes": 100
+          }
         }
       ],
       "output": 100,
       "sgd": {
-        "momentum": 0.1,
-        "learning_rate": 0.000001
+        "momentum": 0,
+        "learning_rate": 0.0001
       }
     },
     "value_function": {
@@ -33,28 +46,35 @@
       "hidden_layers": [],
       "output": 1,
       "sgd": {
-        "momentum": 0.1,
-        "learning_rate": 0.000001
+        "momentum": 0,
+        "learning_rate": 0.005
       }
     },
     "policy_gradient": {
       "id": "policy_gradient",
       "previous": "root",
       "input": 100,
+      "no_sigmoid": true,
       "hidden_layers": [
         {
           "type": "linear",
-          "nodes": 50
+          "nodes": 50,
+          "linear": {
+            "nodes": 50
+          }
         },
         {
           "type": "linear",
-          "nodes": 50
+          "nodes": 50,
+          "linear": {
+            "nodes": 50
+          }
         }
       ],
       "output": 1,
       "sgd": {
-        "momentum": 0.1,
-        "learning_rate": 0.00000001
+        "momentum": 0.7,
+        "learning_rate": 0.05
       }
     }
   }

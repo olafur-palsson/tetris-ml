@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from torch.distributions import Multinomial
+
 from ai.config.neural_net_config import NetworkConfig
 from ai.lib.decider import Decider
 

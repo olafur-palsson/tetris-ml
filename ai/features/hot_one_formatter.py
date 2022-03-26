@@ -27,17 +27,26 @@ class HotOneFormatter(FeatureFormatter[List[float]]):
         game_features = list(map(
             self._cell_to_float,
             self._flatten_vector(game_state.state)))
-        current_block_features = list(map(
-            self._bool_to_float,
-            self._flatten_vector(current_block.state)))
-        x_position_features = [0 for i in range(12)]
-        x_position_features[current_block.x] = 1
-        y_position_features = [0 for i in range(20)]
-        y_position_features[current_block.y] = 1
+        block_state = GameState(
+            height=game_state.height,
+            width=game_state.width)
+        block_state.lock_in_block(current_block)
+        block_features = list(map(
+            self._cell_to_float,
+            self._flatten_vector(block_state.state)))
+
+        # current_block_features = list(map(
+        #     self._bool_to_float,
+        #     self._flatten_vector(current_block.state)))
+        # x_position_features = [0 for i in range(12)]
+        # x_position_features[current_block.x] = 1
+        # y_position_features = [0 for i in range(20)]
+        # y_position_features[current_block.y] = 1
 
         return [
             *game_features,
-            *current_block_features,
-            *x_position_features,
-            *y_position_features
+            *block_features
+            # *current_block_features,
+            # *x_position_features,
+            # *y_position_features
         ]

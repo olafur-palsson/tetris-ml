@@ -9,7 +9,7 @@
     "root": {
       "id": "base_network",
       "previous": null,
-      "input": 251,
+      "input": 403,
       "hidden_layers": [
         {
           "nodes": 100

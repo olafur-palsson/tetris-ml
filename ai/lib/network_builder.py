@@ -34,6 +34,8 @@ class NetworkBuilder:
             if layer_config.type == 'linear':
                 last_length = layer_config.linear.nodes
         layers.append(nn.Linear(last_length, network_config.output))
+        if not network_config.no_sigmoid:
+            layers.append(nn.Sigmoid())
         return nn.Sequential(*layers)
 
     @staticmethod
@@ -46,7 +48,7 @@ class NetworkBuilder:
             return nn.Linear(
                 input_length,
                 layer_config.linear.nodes,
-                bias=layer_config.linear.bias)
+                bias=True)
         elif layer_config.type == 'conv':
             return nn.Conv2d(
                 layer_config.conv.input_channels,

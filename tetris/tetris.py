@@ -64,10 +64,10 @@ class Tetris:
         self.game_state.lock_in_block(self.current_block)
         number_of_filled_rows = self.game_state.number_of_filled_rows
         self.game_state.clear_filled_rows()
-        points = number_of_filled_rows ** 2
+        points = number_of_filled_rows ** 2 * 10 + 0.1
         punishment = block_height_before - self.block_height
         self.score += points
-        return points + punishment * 0.1
+        return points
 
     def finish_round(self):
         self.current_block = self.upcoming_block

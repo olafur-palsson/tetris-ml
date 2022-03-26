@@ -1,6 +1,6 @@
 {
-  "filename": "nn_pg_3",
-  "name": "nn_pg_3",
+  "filename": "nn_pg_11",
+  "name": "nn_pg_11",
   "type": "policy_gradient_network",
   "options": {
     "discount_rate": 0.01
@@ -9,36 +9,37 @@
     "root": {
       "id": "base_network",
       "previous": null,
-      "input": 403,
-      "hidden_layers": [{
-        "nodes": 100
-      }],
-      "output": 100,
+      "input": 404,
+      "hidden_layers": [
+
+      ],
+      "output": 250,
       "sgd": {
-        "momentum": 0.9,
-        "learning_rate": 0.0000001
+        "momentum": 0,
+        "learning_rate": 0.001
       }
     },
     "value_function": {
       "id": "value_function",
       "previous": "root",
-      "input": 100,
+      "input": 250,
       "hidden_layers": [],
       "output": 1,
       "sgd": {
-        "momentum": 0.9,
-        "learning_rate": 0.00000001
+        "momentum": 0,
+        "learning_rate": 0.005
       }
     },
     "policy_gradient": {
       "id": "policy_gradient",
       "previous": "root",
-      "input": 100,
+      "input": 250,
+      "no_sigmoid": true,
       "hidden_layers": [],
       "output": 1,
       "sgd": {
-        "momentum": 0.9,
-        "learning_rate": 0.000001
+        "momentum": 0,
+        "learning_rate": 0.01
       }
     }
   }

@@ -79,14 +79,16 @@ class Game:
             if score:
                 self.player.give_reward(score)
         # For losing. Bitch as hoe
-        self.player.give_reward(-10)
         self.analytics.log_game(tetris.game_state, total_score)
         self.analytics.print_analytics(total_score)
+        squares_filled = 0
+        for line in tetris.game_state.state:
+            for cell in line:
+                squares_filled += 1 if not cell.empty else 0
+        self.player.give_reward(-100)
 
     def render(self, tetris):
-        self.engine.clear()
-        self.engine.render_game_state(tetris.game_state)
-        self.engine.render_current_block(tetris.current_block)
+        self.engine.render_frame(tetris=tetris)
 
     @property
     def config(self):

@@ -1,73 +1,75 @@
 filename: nn_pg_2
 name: nn_pg_2
-  type: policy_gradient_network
-  features: raw
-  networks:
+type: policy_gradient_network
+features: raw
+networks:
+  conv_piece:
+    id: conv_piece
+    input:
+      - 4
+      - 4
+    hidden_layers:
+      - type: conv2d
+        nodes: 0
+        conv:
+          in_channels: 1
+          out_channels: 1
+          stride: 1
+          kernel_size: 2
+    sgd:
+      momentum: 0.9
+      learning_rate: 0.0000000003
 
-    conv_piece:
-      id: conv_piece
-      input:
-        - 4
-        - 4
-      hidden_layers:
-        - type: conv2d
-          conv:
-            in_channels: 1
-            out_channels: 1
-            stride: 1
-            kernel_size: 2
-      sgd:
-        momentum: 0.9
-        learning_rate: 0.0000000003
+  conv_board:
+    id: conv_board
+    input:
+      - 20
+      - 10
+    hidden_layers:
+      - type: conv2d
+        nodes: 0
+        conv:
+          nodes: 50
+          in_channels: 1
+          out_channels: 4
+          stride: 2
+          kernel_size: 4
+    sgd:
+      momentum: 0.9
+      learning_rate: 0.0000000003
 
-    conv_board:
-      id: conv_board
-      input:
-        - 20
-        - 10
-      hidden_layers:
-        - type: conv2d
-          conv:
-            in_channels: 1
-            out_channels: 4
-            stride: 2
-            kernel_size: 4
-      sgd:
-        momentum: 0.9
-        learning_rate: 0.0000000003
+  root:
+    id: base_network
+    input: 251
+    hidden_layers:
+      - type: linear
+        nodes: 50
+        linear:
+          nodes: 50
+    sgd:
+      momentum: 0.9
+      learning_rate: 0.0000000003
 
-    root:
-      id: base_network
-      input: 251
-      hidden_layers:
-        - type: linear
-          linear:
-            nodes: 50
-      sgd:
-        momentum: 0.9
-        learning_rate: 0.0000000003
+  value_function:
+    id: value_function
+    input: 50
+    hidden_layers:
+      - type: linear
+        linear:
+          nodes: 50
+    sgd:
+      momentum: 0.9
+      learning_rate: 0.0000000003
 
-    value_function:
-      id: value_function
-      input: 50
-      hidden_layers:
-        - type: linear
-            linear:
-              nodes: 50
-      sgd:
-        momentum: 0.9
-        learning_rate: 0.0000000003
-
-    policy_gradient:
-      id: policy_gradient
-      input: 50
-      hidden_layers:
-        - type: linear
-            linear:
-              nodes: 50
-      sgd:
-        momentum: 0.5
-        learning_rate: 0.0000000001
+  policy_gradient:
+    id: policy_gradient
+    input: 50
+    hidden_layers:
+      - type: linear
+        nodes: 50
+    sgd:
+      momentum: 0.5
+      learning_rate: 0.0000000001
 
 
 

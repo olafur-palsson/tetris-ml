@@ -29,6 +29,7 @@ class PolicyGradientNetwork(Decider):
     _base_network: Network
     _policy_gradient: Network
     _value_function: Network
+    count = 0
 
     def __init__(self, config: Config):
         self._manager = NetworkManager(config)
@@ -49,6 +50,9 @@ class PolicyGradientNetwork(Decider):
         distribution = Multinomial(1, probabilities)
         move = distribution.sample()
         _, index_of_move = move.max(0)
+        self.count += 1
+        # if self.count % 1000 == 1:
+        #     print(probabilities)
 
         # Expected reward
         expected_reward = self._value_function.model(

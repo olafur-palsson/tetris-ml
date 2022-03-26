@@ -39,6 +39,7 @@ class NetworkConfig:
     id: str
     previous: Optional[str]
     hidden_layers: List[LayerConfig]
+    no_sigmoid: Optional[bool]
     input: int
     output: int
     sgd: SGDConfig

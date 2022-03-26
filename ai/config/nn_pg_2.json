@@ -6,10 +6,10 @@
     "root": {
       "id": "base_network",
       "previous": null,
-      "input": 251,
+      "input": 403,
       "hidden_layers": [{
         "type": "linear",
-        "linear":
+        "linear": 50
       }, {
         "nodes": 50
       }],

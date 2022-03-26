@@ -6,6 +6,8 @@ from dacite import from_dict
 
 from ai.config.neural_net_config import Config
 from ai.features.hot_one_formatter import HotOneFormatter
+from ai.features.raw_formatter import RawFormatter
+from ai.neural_network.pg_conv_network import PGConvNetwork
 from ai.neural_network.policy_gradient_network import PolicyGradientNetwork
 from config import Level
 from game import Game
@@ -36,7 +38,8 @@ def get_player(args) -> Player:
             config = from_dict(Config, yaml.load(file))
 
     network = PolicyGradientNetwork(config)
-    return AIPlayer(network)
+    formatter = HotOneFormatter()
+    return AIPlayer(network, formatter)
 
 
 def create_conv_player(config: Config):
